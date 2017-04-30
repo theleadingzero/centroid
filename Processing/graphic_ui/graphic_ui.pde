@@ -12,8 +12,9 @@ Serial myPort;  // Create object from Serial class
 int val;      // Data received from the serial port
 
 int numSensors = 12;
-int[] xValues;
-int[] yValues;
+float[] xValues;
+float[] yValues;
+
 
 void setup() {
   size( 600, 600 );
@@ -26,8 +27,8 @@ void setup() {
   
   
   // initialise the arrays of sensor values
-  xValues = new int[numSensors/2];
-  yValues = new int[numSensors/2];
+  xValues = new float[numSensors/2];
+  yValues = new float[numSensors/2];
   for(int i=0; i<numSensors/2; i++) {
      xValues[i] = 0;
      yValues[i] = 0;
@@ -41,10 +42,12 @@ void draw() {
   background(255);
   
   // show values above a threshold
+  float xThreshold = 0.8;
+  float yThreshold = 0.4;
   for(int i=0; i<numSensors/2; i++){
     for(int j=0; j<numSensors/2; j++) {
-      if(xValues[i] > 20 && yValues[j] > 5){
-        ellipse(i*100+10, j*100+10, 30, 30);
+      if(xValues[i] > xThreshold && yValues[j] > yThreshold){
+        ellipse(i*100+50, j*100+50, 30, 30);
       }
     }
   }
@@ -67,23 +70,44 @@ void serialEvent(Serial p) {
     print( values[i] + " " );
   }
   println();*/
+  
+  normaliseSensors();
+  printValues();
 }
 
 
 void parseInputs(int[] inValues) {
   // read in x and y positions
-  print("X: ");
   int j=numSensors/2;
   for(int i=0; i<numSensors/2; i++) {
-     xValues[i] = inValues[j--];
+     xValues[i] = float(inValues[j--]);
+  }
+  
+  for(int i=0; i<numSensors/2; i++) {
+     yValues[i] = float(inValues[i + numSensors/2]);
+  }
+}
+
+void printValues() {
+    print("X: ");
+  int j=numSensors/2;
+  for(int i=0; i<numSensors/2; i++) {
      print(xValues[i] + " ");  
   }
   println();
   
   print("Y: ");
   for(int i=0; i<numSensors/2; i++) {
-     yValues[i] = inValues[i + numSensors/2];
      print(yValues[i] + " "); 
   }
   println();
+}
+
+void normaliseSensors() {
+  int xMax = 50;
+  int yMax = 10;
+ for(int i=0; i<numSensors/2; i++) {
+   xValues[i] = xValues[i]/xMax;
+   yValues[i] = yValues[i]/yMax;  
+ }
 }
