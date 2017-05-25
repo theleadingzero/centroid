@@ -21,11 +21,14 @@ float[] yMax;
 float xPos = 0;
 float yPos = 0;
 
+PFont font;
+
+
 /*********************************
  * setup
  *********************************/
 void setup() {
-  size( 600, 600 );
+  size( 700, 600 );
 
   // open port
   String portName = Serial.list()[1];
@@ -47,7 +50,11 @@ void setup() {
     yMax[i] = 0;
   }
 
-  fill(200, 0, 100);
+  // text settings
+  // The font must be located in the sketch's 
+  // "data" directory to load successfully
+  font = loadFont("AndaleMono-20.vlw");
+  textFont(font, 12);
 }
 
 /*********************************
@@ -60,17 +67,25 @@ void draw() {
     background(255);
 
     // show values above a threshold
-    /*float xThreshold = 0.8;
-     float yThreshold = 0.4;
-     for (int i=0; i<numSensors/2; i++) {
-     for (int j=0; j<numSensors/2; j++) {
-     if (xValues[i] > xThreshold && yValues[j] > yThreshold) {
-     ellipse(i*100+50, j*100+50, 30, 30);
-     }
-     }
-     }*/
+    float xThreshold = 0.8;
+    float yThreshold = 0.4;
+    for (int i=0; i<numSensors/2; i++) {
+      for (int j=0; j<numSensors/2; j++) {
+        if (xValues[i] > xThreshold && yValues[j] > yThreshold) {
+          ellipse(i*100+60, j*100+50, 30, 30);
+        }
+        // show y values
+        text(yValues[j], 30, j*100+50);
+      }
+      // show x values
+      text(xValues[i], i*100+50, 30);
+    }
 
+    fill(200, 0, 100);
     ellipse(xPos+50, yPos+50, 30, 30);
+
+    textSize(32);
+    fill(15);
   }
 }
 
@@ -88,16 +103,16 @@ void serialEvent(Serial p) {
   int[] values = int(split( inString, ' '));
   parseInputs( values );
   // print  for debugging
-  /*for ( int i=0; i<values.length; i++) {
+  for ( int i=0; i<values.length; i++) {
    print( values[i] + " " );
    }
-   println();*/
+   println();
 
   if ( calibrateFlag ) {
     calibrateSensors();
   } else {
     normaliseSensors();
-    printValues();
+    //printValues();
     calculateCentroid();
   }
 }
@@ -107,7 +122,7 @@ void serialEvent(Serial p) {
  *********************************/
 void parseInputs(int[] inValues) {
   // read in x and y positions
-  int j=numSensors/2;
+  int j=numSensors/2-1;
   for (int i=0; i<numSensors/2; i++) {
     xValues[i] = float(inValues[j--]);
   }
@@ -142,6 +157,10 @@ void normaliseSensors() {
   for (int i=0; i<numSensors/2; i++) {
     xValues[i] = xValues[i]/xMax[i];
     yValues[i] = yValues[i]/yMax[i];
+
+    // limit sensors to not go below 0
+    if ( xValues[i] < 0 ) xValues[i] = 0;
+    if ( yValues[i] < 0 ) yValues[i] = 0;
   }
 }
 
