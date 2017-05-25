@@ -51,8 +51,6 @@ void setup() {
   }
 
   // text settings
-  // The font must be located in the sketch's 
-  // "data" directory to load successfully
   font = loadFont("AndaleMono-20.vlw");
   textFont(font, 12);
 }
@@ -70,15 +68,10 @@ void draw() {
     float xThreshold = 0.8;
     float yThreshold = 0.4;
     for (int i=0; i<numSensors/2; i++) {
-      for (int j=0; j<numSensors/2; j++) {
-        if (xValues[i] > xThreshold && yValues[j] > yThreshold) {
-          ellipse(i*100+60, j*100+50, 30, 30);
-        }
-        // show y values
-        text(yValues[j], 30, j*100+50);
-      }
       // show x values
       text(xValues[i], i*100+50, 30);
+      // show y values
+      text(yValues[i], 30, i*100+50);
     }
 
     fill(200, 0, 100);
@@ -88,8 +81,6 @@ void draw() {
     fill(15);
   }
 }
-
-
 
 
 /*********************************
@@ -103,10 +94,10 @@ void serialEvent(Serial p) {
   int[] values = int(split( inString, ' '));
   parseInputs( values );
   // print  for debugging
-  for ( int i=0; i<values.length; i++) {
+  /*for ( int i=0; i<values.length; i++) {
    print( values[i] + " " );
-   }
-   println();
+   }*/
+  println();
 
   if ( calibrateFlag ) {
     calibrateSensors();
@@ -122,11 +113,14 @@ void serialEvent(Serial p) {
  *********************************/
 void parseInputs(int[] inValues) {
   // read in x and y positions
+
+  // x values
   int j=numSensors/2-1;
   for (int i=0; i<numSensors/2; i++) {
     xValues[i] = float(inValues[j--]);
   }
 
+  // y values
   for (int i=0; i<numSensors/2; i++) {
     yValues[i] = float(inValues[i + numSensors/2]);
   }
@@ -154,6 +148,8 @@ void printValues() {
  * normaliseSensors
  *********************************/
 void normaliseSensors() {
+  // divide each sensor value by the maximum value
+  // obtained during calibration
   for (int i=0; i<numSensors/2; i++) {
     xValues[i] = xValues[i]/xMax[i];
     yValues[i] = yValues[i]/yMax[i];
@@ -168,25 +164,33 @@ void normaliseSensors() {
  * calculateCentroid
  *********************************/
 void calculateCentroid() {
-  // x
+  // x values
   float num = 0;
   float dem = 0;
   for (int i=0; i<numSensors/2; i++) {
-    num += xValues[i] * i * 100;
+    // weighted product of each sensor
+    num += xValues[i] * i * 100; 
+    // sum of sensor values
     dem += xValues[i];
   }
-  xPos = num/dem;
-  if ( dem < 1)  xPos = 0;
+  // ratio of product and sum
+  xPos = num/dem; 
+  // threshold to off screen if not sufficient levels from sensors
+  if ( dem < 0.1)  xPos = -100; 
 
   // y
   num = 0;
   dem = 0;
   for (int i=0; i<numSensors/2; i++) {
+    // weighted product of each sensor
     num += yValues[i] * i * 100;
+    // sum of sensor values
     dem += yValues[i];
   }
+  // ratio of product and sum
   yPos = num/dem;
-  if ( dem < 1)  yPos = 0;
+  // threshold to off screen if not sufficient levels from sensors
+  if ( dem < 0.1)  yPos = -100;
 
   println("X: " + xPos + " Y: " + yPos);
 }
@@ -197,23 +201,12 @@ void calculateCentroid() {
 void calibrateSensors() {
   background(0);
 
+  // if the current sensor value is higher than highest stored
+  // update the max value to be current value
   for (int i=0; i<numSensors/2; i++) {
     if (xValues[i] > xMax[i]) xMax[i] = xValues[i];
     if (yValues[i] > yMax[i]) yMax[i] = yValues[i];
   }
-
-  print("X: ");
-  int j=numSensors/2;
-  for (int i=0; i<numSensors/2; i++) {
-    print(xMax[i] + " ");
-  }
-  println();
-
-  print("Y: ");
-  for (int i=0; i<numSensors/2; i++) {
-    print(yMax[i] + " ");
-  }
-  println();
 }
 
 /*********************************
